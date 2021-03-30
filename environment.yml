@@ -1,4 +1,4 @@
-name: heejoojin_env
+name: ankle_exo
 channels:
   - pytorch
   - defaults
@@ -114,5 +114,5 @@ dependencies:
   - zipp=3.4.1=pyhd3eb1b0_0
   - zlib=1.2.11=h7b6447c_3
   - zstd=1.4.5=h9ceee32_0
-prefix: /home/epic/anaconda3/envs/heejoojin_env
+prefix: /home/epic/anaconda3/envs/ankle_exo
 
