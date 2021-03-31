@@ -62,7 +62,7 @@ def plot_grouped_rmse(width=20, height=20):
                             ha='center', va='bottom')
         
         ax.set_ylabel('Gait Phase Estimated RMSE [%]', fontweight='semibold')
-        ax.set_ylim([0, 8.5])
+        ax.set_ylim([0, 4])
         ax.set_xticks(x_pos)
         ax.set_xticklabels(labels)
         ax.legend(loc='upper right')
