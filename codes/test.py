@@ -201,18 +201,18 @@ class Test:
                     result_r_df['ground_truth'] = result_r_df['ground_truth'].where(result_r_df['ground_truth'] <= 0.60, np.nan)
                     result_r_df['prediction'] = result_r_df['prediction'].where(result_r_df['ground_truth'] <= 0.60, np.nan)
                     
-                    plt.axhline(0.6, color='lightgray', linestyle='dashed', linewidth=c.LINEWIDTH, zorder=0)
+                    plt.axhline(60.0, color='lightgray', linestyle='dashed', linewidth=c.LINEWIDTH, zorder=0)
 
-                    plt.plot(dotted.iloc[:self._range], color='lightgrey', linestyle='dashed', linewidth=c.LINEWIDTH)
-                    plt.plot(result_r_df.iloc[:self._range, 0], label='Groud Truth', linewidth=c.LINEWIDTH, color='powderblue')
-                    plt.plot(result_r_df.iloc[:self._range, 1], label='Prediction', linewidth=c.LINEWIDTH, color='darksalmon')
+                    plt.plot(dotted.iloc[:self._range] * 100, color='lightgrey', linestyle='dashed', linewidth=c.LINEWIDTH)
+                    plt.plot(result_r_df.iloc[:self._range, 0] * 100, label='Groud Truth', linewidth=c.LINEWIDTH, color='powderblue')
+                    plt.plot(result_r_df.iloc[:self._range, 1] * 100, label='Prediction', linewidth=c.LINEWIDTH, color='darksalmon')
                     if self.data_type == 'left':
                         plt.title('Left Ankle', fontweight='semibold')
                     elif self.data_type == 'right':
                         plt.title('Right Ankle', fontweight='semibold')
 
                     plt.xticks([])
-                    plt.ylabel('Gait Phase Estimated RMSE [%]', fontweight='semibold')
+                    plt.ylabel('Estimated Gait Phase [%]', fontweight='semibold')
                     plt.xlabel('Time [Seconds]', fontweight='semibold')
                     plt.legend(loc='upper right')
                     plt.tight_layout()
@@ -270,15 +270,17 @@ class Test:
         
         fig = plt.figure(figsize=(20, 8))
         
-        plt.plot(result[:self._range, 0], label='Groud Truth', linewidth=c.LINEWIDTH, color='powderblue')
-        plt.plot(result[:self._range, 1], label='Prediction', linewidth=c.LINEWIDTH, color='darksalmon')
+        ground_truth = result[:self._range, 0] * 100
+        prediction = result[:self._range, 1] * 100
+        plt.plot(ground_truth, label='Groud Truth', linewidth=c.LINEWIDTH, color='powderblue')
+        plt.plot(prediction, label='Prediction', linewidth=c.LINEWIDTH, color='darksalmon')
         if self.data_type == 'left':
             plt.title('Left Ankle', fontweight='semibold')
         elif self.data_type == 'right':
             plt.title('Right Ankle', fontweight='semibold')
 
         plt.xticks([])
-        plt.ylabel('Gait Phase Estimated RMSE [%]', fontweight='semibold')
+        plt.ylabel('Estimated Gait Phase [%]', fontweight='semibold')
         plt.xlabel('Time [Seconds]', fontweight='semibold')
         plt.legend(loc='upper right')
         plt.tight_layout()
@@ -353,3 +355,4 @@ class Test:
         plt.tight_layout()
         fig.savefig(self.edges_path)
         plt.close(fig)
+
