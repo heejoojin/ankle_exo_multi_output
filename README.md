@@ -4,7 +4,7 @@
 
 - Train
 ```bash
-python main.py --mode=train --save_name=*name --data_type=*data_type --test_type=*test_type --task=multi --model=cnn --scheduler=plateau --window_size=120 --kernel_size=40 --batch_size=128 --dropout=0.2 --epoch=100 --optimizer=adam --lr=0.001 --shuffle
+python main.py --mode=train --save_name=*name --data_type=*data_type --test_type=*test_type --task=multi --model=cnn --scheduler=plateau --window_size=120 --kernel_size=40 --batch_size=128 --dropout=0.2 --epoch=100 --optimizer=adam --lr=0.001
 ```
 
 - Test
