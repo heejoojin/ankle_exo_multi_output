@@ -1,6 +1,7 @@
 ### Convolutional Neural Network-based Gait Phase Estimation using a Robotic Ankle Exoskeleton
 
 ![](https://github.com/heejoojin/ankle_exo/blob/main/model_architecture.png)
+![](https://github.com/heejoojin/ankle_exo/blob/main/plots/grouped_rmse.png)
 
 - Train
 ```bash
