@@ -98,8 +98,6 @@ class Test:
             metrics = {'accuracy': 0.0, 'precision': 0.0, 'recall': 0.0, 'specificity': 0.0, 'npv': 0.0, 'f1score': 0.0}
             start_time = time.time()
 
-            count = 0.0
-
             with torch.no_grad():
                 for batch_idx, (x, y) in enumerate(self.data_loader):
                     x = x.to(self.device)
@@ -124,10 +122,6 @@ class Test:
                         out_r, out_c = output
                         out_r = out_r.cpu()
                         out_c = out_c.cpu()
-
-                        _count = np.count_nonzero(y[:, -1].numpy())
-                        if _count != 0.0:
-                            count += 1
 
                         #############################################################
                         # getting gait phase estimation, rmse, standard deviation after gait phase conversion from its polar coordinates
