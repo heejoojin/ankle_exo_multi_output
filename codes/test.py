@@ -147,7 +147,7 @@ class Test:
                         indices = indices[0]
                         _output = out_r[indices, :]
                         _target = y[indices, :-1]
-                        _raw_result = np.concatenate([_output, _target], axis=1)
+                        _raw_result = np.concatenate([_target, _output], axis=1)
                         raw_result = np.concatenate([raw_result, _raw_result], axis=0)
                         #############################################################
                         
