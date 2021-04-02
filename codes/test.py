@@ -70,9 +70,8 @@ class Test:
     def test_regression(self, output, target, mask=None):
         
         _gait_percentage = polar_coordiantes_to_gait_percentage(output=output, target=target)
-        _rmse, _std = gait_phase_rmse(output, target, mask)
-        
-        return _gait_percentage, _rmse.item(), _std.item()
+
+        return _gait_percentage
     
     def do(self):
         
@@ -93,12 +92,9 @@ class Test:
             result = np.empty((0, 2))
             result_r = np.empty((0, 2))
             result_c = np.empty((0, 2))
-
             raw_result = np.empty((0, 4))
-
             roc_result = np.empty((0, 2))
-            rmse = 0.0
-            std = 0.0
+
             metrics = {'accuracy': 0.0, 'precision': 0.0, 'recall': 0.0, 'specificity': 0.0, 'npv': 0.0, 'f1score': 0.0}
             start_time = time.time()
 
@@ -111,10 +107,10 @@ class Test:
                     
                     if self.task == 'regression':
                         output = output.cpu()
-                        _gait_percentage, _rmse, _std = self.test_regression(output, y)
+                        _gait_percentage = self.test_regression(output, y)
                         result = np.concatenate([result, _gait_percentage.numpy()], axis=0)
-                        rmse += _rmse
-                        std += _std
+                        _raw_result = np.concatenate([y, output], axis=1)
+                        raw_result = np.concatenate([raw_result, _raw_result], axis=0)
                         
                     elif self.task == 'classification':
                         output = output.cpu()
@@ -135,10 +131,8 @@ class Test:
 
                         #############################################################
                         # getting gait phase estimation, rmse, standard deviation after gait phase conversion from its polar coordinates
-                        _gait_percentage, _rmse, _std = self.test_regression(out_r, y[:, :-1], mask=y[:, -1])
+                        _gait_percentage = self.test_regression(out_r, y[:, :-1], mask=y[:, -1])
                         result_r = np.concatenate([result_r, _gait_percentage.numpy()], axis=0)
-                        rmse += _rmse
-                        std += _std
                         #############################################################
                         
                         #############################################################
@@ -159,7 +153,11 @@ class Test:
                         for key in metrics.keys():
                             metrics[key] += _metrics[key]
                         #############################################################
-                        
+            
+            rmse, std = gait_phase_rmse(target=raw_result[:, :2], output=raw_result[:, 2:])
+            rmse = rmse.item()
+            std = std.item()
+
             end_time = time.time() - start_time
 
             #############################################################
@@ -177,12 +175,7 @@ class Test:
                 result_df.to_csv(csv_result_path, index=False)
             
             if self.task == 'regression' or self.task == 'multi':
-                if self.task == 'multi':
-                    rmse = rmse / count
-                    std = std / count
-                else:
-                    rmse = rmse / len(self.data_loader)
-                    std = std / len(self.data_loader)
+                
                 print('RMSE: %1.5f | Elapsed Time: %0f'%(rmse, end_time))
 
                 plot_path_png = os.path.join(self.result_path, 'gait_phase_regression_%d.png'%fold_idx)
