@@ -49,14 +49,13 @@ def get_data_list(args, data_path):
         
         for file_name in os.listdir(data_path):
             if '.csv' in file_name:
-                data_list.append(file_name)
+                data_list.append(os.path.join(data_path, file_name))
 
         random.Random(args.seed).shuffle(data_list)
         idx = max(math.floor(len(data_list) * args.test_ratio), 1)
 
-        _data_list = [os.path.join(data_path, file_name) for file_name in data_list]
-        train_val_list = _data_list[:-idx]
-        test_list = _data_list[-idx:]
+        train_val_list = data_list[:-idx]
+        test_list = data_list[-idx:]
         
     return train_val_list, test_list
 
@@ -87,7 +86,7 @@ def split_speed_act():
 def get_result_dirs(args):
     result_path = os.path.join(c.RESULT_PATH, args.save_name)
     npy_data_path = os.path.join(result_path, 'npy_data')
-    for path in [c.RESULT_PATH, c.PLOT_PATH, result_path, result_path, npy_data_path]:
+    for path in [c.RESULT_PATH, c.PLOT_PATH, result_path, npy_data_path]:
         if not os.path.isdir(path):
             os.mkdir(path)
     return result_path, npy_data_path
