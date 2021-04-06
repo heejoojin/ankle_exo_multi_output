@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import os
 import pandas as pd
-from metric import *
+import metric
 from torch.utils.data import Dataset
 
 def multitask_dataset(data_list, npy_data_path, model, window_size, normalization, _mode):
@@ -41,7 +41,7 @@ def multitask_dataset(data_list, npy_data_path, model, window_size, normalizatio
         _x = np.lib.stride_tricks.as_strided(_x, shape=shape, strides=strides)
         
         _ry = _ry[window_size - 1:]
-        _ry = gait_phase_to_polar_coordinates(_ry)
+        _ry = metric.gait_phase_to_polar_coordinates(_ry)
 
         _cy = _cy[window_size - 1:]
         _cy = np.expand_dims(_cy, axis=1)
@@ -110,7 +110,7 @@ def regression_dataset(data_list, npy_data_path, model, window_size, normalizati
             strides = (new_x.strides[0], new_x.strides[0], new_x.strides[1])
             new_x = np.lib.stride_tricks.as_strided(new_x, shape=shape, strides=strides)
             new_y = new_y[window_size - 1:]
-            new_y = gait_phase_to_polar_coordinates(new_y)
+            new_y = metric.gait_phase_to_polar_coordinates(new_y)
             x = np.concatenate([x, new_x], axis=0)
             y = np.concatenate([y, new_y], axis=0)
         

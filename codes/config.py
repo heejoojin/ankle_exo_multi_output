@@ -17,6 +17,8 @@ RESULT_PATH = os.path.join(os.pardir, 'results')
 PLOT_PATH = os.path.join(os.pardir, 'plots')
 MODEL_TYPE = ['100', 'best']
 
+LABEL_DICT = {'speed0': '0.8 m/s', 'speed2': '1.0 m/s', 'speed3': '1.2 m/s', 'act0': '0 Nm', 'act1': '10 Nm', 'act2': '20 Nm', 'act3': '30 Nm'}
+
 MODEL_LIST = ['left', 'right']
 LINEWIDTH = 5
 K_FOLD = 5

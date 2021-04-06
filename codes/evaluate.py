@@ -6,12 +6,13 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import config as c
+import metric
 from matplotlib import rcParams
 from sklearn.metrics import roc_curve, auc
-from metric import *
+# from metric import *
 
 rcParams['font.family'] = 'serif'
-rcParams['font.size'] = 17
+rcParams['font.size'] = 40
 
 class Test:
     def __init__(self, **kwargs):
@@ -63,13 +64,15 @@ class Test:
         _output = torch.sigmoid(output)
         _output = (_output > 0.5).float()
         _result = np.concatenate([target.numpy(), _output.numpy()], axis=1)
-        _metrics = classification_metrics(_output, target)
+        _metrics = metric.classification_metrics(_output, target)
         
         return _roc_result, _result, _metrics
         
-    def test_regression(self, output, target, mask=None):
+    def test_regression(self, output, target): # , mask=None):
         
-        _gait_percentage = polar_coordiantes_to_gait_percentage(output=output, target=target)
+        _gait_percentage = metric.polar_coordiantes_to_gait_percentage(output=output, target=target)
+        # _gait_percentage[:, 0] = target
+        # _gait_percentage[:, 1] = output
 
         return _gait_percentage
     
@@ -85,8 +88,10 @@ class Test:
 
             raw_result_path = os.path.join(self.result_path, 'raw_result_r_%d.csv'%fold_idx)
 
-            model = torch.load(model_path)
+            model = torch.load(model_path, map_location='cpu')
+            
             model.to(self.device)
+
             model.eval()
 
             result = np.empty((0, 2))
@@ -125,16 +130,18 @@ class Test:
 
                         #############################################################
                         # getting gait phase estimation, rmse, standard deviation after gait phase conversion from its polar coordinates
-                        _gait_percentage = self.test_regression(out_r, y[:, :-1], mask=y[:, -1])
+                        _gait_percentage = self.test_regression(out_r, y[:, :-1]) #, mask=y[:, -1])
                         result_r = np.concatenate([result_r, _gait_percentage.numpy()], axis=0)
                         #############################################################
                         
                         #############################################################
                         # saving raw test result (= x,y polar coordinates) before gait conversion
-                        indices = torch.nonzero(y[:, -1], as_tuple=True)
-                        indices = indices[0]
-                        _output = out_r[indices, :]
+                        # indices = torch.nonzero(y[:, -1], as_tuple=True)
+                        # indices = indices[0]
+                        indices = torch.nonzero(_gait_percentage[:,0] <= 0.60, as_tuple=True)[0]
+                        # print(len(indices))
                         _target = y[indices, :-1]
+                        _output = out_r[indices, :]
                         _raw_result = np.concatenate([_target, _output], axis=1)
                         raw_result = np.concatenate([raw_result, _raw_result], axis=0)
                         #############################################################
@@ -148,9 +155,10 @@ class Test:
                             metrics[key] += _metrics[key]
                         #############################################################
             
-            rmse, std = gait_phase_rmse(target=raw_result[:, :2], output=raw_result[:, 2:])
+            rmse = metric.gait_phase_rmse(target=torch.Tensor(raw_result[:, :2]), output=torch.Tensor(raw_result[:, 2:]))
             rmse = rmse.item()
-            std = std.item()
+            print(rmse)
+            # std = std.item()
 
             end_time = time.time() - start_time
 
@@ -176,8 +184,8 @@ class Test:
                 plot_path_svg = os.path.join(self.result_path, 'gait_phase_regression_%d.svg'%fold_idx)
 
                 with open(self.rmse_path, 'a', newline='') as f:
-                    csv_writer = csv.DictWriter(f, fieldnames=['rmse', 'std'])
-                    csv_writer.writerow({'rmse': rmse, 'std': std})
+                    csv_writer = csv.DictWriter(f, fieldnames=['rmse'])
+                    csv_writer.writerow({'rmse': rmse})
 
                 if self.task == 'multi':
                     
@@ -329,8 +337,8 @@ class Test:
         fig = plt.figure(figsize=(30, 8))
         ax = fig.add_subplot(111)
 
-        rects1 = ax.bar(x_pos - width/2, self.swing_to_stance, width, label='Stance to Swing | Falling Edge', color='powderblue')
-        rects2 = ax.bar(x_pos + width/2, self.stance_to_swing, width, label='Swing to Stance | Rising Edge', color='darksalmon')
+        ax.bar(x_pos - width/2, self.swing_to_stance, width, label='Stance to Swing | Falling Edge', color='powderblue')
+        ax.bar(x_pos + width/2, self.stance_to_swing, width, label='Swing to Stance | Rising Edge', color='darksalmon')
     
         ax.set_title('Classification Errors', fontweight='semibold')
         ax.set_xlabel('Time Difference [Seconds]', fontweight='semibold')

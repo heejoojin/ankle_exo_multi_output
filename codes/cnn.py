@@ -1,44 +1,44 @@
 import os
 import torch 
 import torch.nn as nn
-from activation import *
-from miscellaneous import *
+import activation, miscellaneous
     
 class CNN(nn.Module):
     def __init__(self, **kwargs):
         super(CNN, self).__init__()
 
         print(kwargs)
-        in_channels = kwargs['in_channels']
-        out_channels = kwargs['out_channels']
+        # in_channels = kwargs['in_channels']
+        # out_channels = kwargs['out_channels']
+        channels = kwargs['channels']
         self.out_features = kwargs['out_features']
 
         kernel_size = kwargs['kernel_size']
         window_size = kwargs['window_size']
-        activation = kwargs['activation']
+        _activation = kwargs['activation']
         dropout = kwargs['dropout']
         
         # saving model parameters
         torch.save(kwargs, os.path.join(kwargs['result_path'], 'model_params.tar'))
 
         # first convolutional layer
-        self.conv1 = nn.Conv1d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size)
-        self.bn1 = nn.BatchNorm1d(num_features=out_channels)
-        self.act1 = get_activation(activation)
+        self.conv1 = nn.Conv1d(in_channels=channels, out_channels=channels, kernel_size=kernel_size)
+        self.bn1 = nn.BatchNorm1d(num_features=channels)
+        self.act1 = activation.get_activation(_activation)
         self.drop1 = nn.Dropout(p=dropout)
 
         # second convolutional layer
-        self.conv2 = nn.Conv1d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size)
-        self.bn2 = nn.BatchNorm1d(num_features=out_channels)
-        self.act2 = get_activation(activation)
+        self.conv2 = nn.Conv1d(in_channels=channels, out_channels=channels, kernel_size=kernel_size)
+        self.bn2 = nn.BatchNorm1d(num_features=channels)
+        self.act2 = activation.get_activation(_activation)
         self.drop2 = nn.Dropout(p=dropout)
 
         # getting output size after two convolutions
-        out = get_sequence_out(window_size, kernel_size)
-        out = get_sequence_out(out, kernel_size)
+        out = miscellaneous.get_sequence_out(window_size, kernel_size)
+        out = miscellaneous.get_sequence_out(out, kernel_size)
 
         # getting output size after "flattening"
-        in_features = int(out * in_channels)
+        in_features = int(out * channels)
     
         # two fully connected layers for single-output model (regression | classification)
         self.fc1 = nn.Linear(in_features=in_features, out_features=in_features//2)

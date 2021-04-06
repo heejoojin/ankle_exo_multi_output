@@ -3,17 +3,8 @@ import argparse
 import torch
 import random
 import config as c
+import evaluate, dataset, optimizer, train, tcn, cnn, criterion, miscellaneous, scheduler, plot
 from torch.utils.data import DataLoader
-from test import *
-from data import *
-from optimizer import *
-from train import *
-from tcn import *
-from cnn import *
-from criterion import *
-from miscellaneous import *
-from scheduler import *
-from plot import *
 
 def main(args):
     
@@ -21,6 +12,7 @@ def main(args):
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     if not device:
         raise SystemError('There is no device!')
+        
     random.seed(args.seed)
     torch.manual_seed(args.seed)
     if device == 'cuda:0':
@@ -31,13 +23,13 @@ def main(args):
         print(main_params)
 
         data_path = os.path.join(c.DATA_PATH, args.data_type)
-        result_path, npy_data_path = get_result_dirs(args)
+        result_path, npy_data_path = miscellaneous.get_result_dirs(args)
         torch.save(main_params, os.path.join(result_path, 'main_params.tar'))
 
-        train_val_list, test_list = get_data_list(args, data_path)
+        train_val_list, test_list = miscellaneous.get_data_list(args, data_path)
         
         for fold_idx in range(1, args.k_fold +  1):
-            train_list, val_list = split_train_val(train_val_list, args.k_fold, fold_idx)
+            train_list, val_list = miscellaneous.split_train_val(train_val_list, args.k_fold, fold_idx)
 
             print('train dataset', train_list, len(train_list))
             print('valdiation dataset', val_list, len(val_list))
@@ -47,17 +39,17 @@ def main(args):
             mode_list = ['train', 'val', 'test']
             for _mode, _data_list in zip(mode_list, data_list):
                 if args.task == 'classification':
-                    classification_dataset(data_list=_data_list, npy_data_path=npy_data_path,
+                    dataset.classification_dataset(data_list=_data_list, npy_data_path=npy_data_path,
                                             model=args.model, window_size=args.window_size, normalization=args.normalization, _mode=_mode)
                 elif args.task == 'regression':
-                    regression_dataset(data_list=_data_list, npy_data_path=npy_data_path,
+                    dataset.regression_dataset(data_list=_data_list, npy_data_path=npy_data_path,
                                         model=args.model, window_size=args.window_size, normalization=args.normalization, _mode=_mode)
                 elif args.task == 'multi':
-                    multitask_dataset(data_list=_data_list, npy_data_path=npy_data_path,
+                    dataset.multitask_dataset(data_list=_data_list, npy_data_path=npy_data_path,
                                 model=args.model, window_size=args.window_size, normalization=args.normalization, _mode=_mode)
 
-            train_dataset = DataSet(npy_data_path=npy_data_path, _mode='train')
-            val_dataset = DataSet(npy_data_path=npy_data_path, _mode='val')
+            train_dataset = dataset.DataSet(npy_data_path=npy_data_path, _mode='train')
+            val_dataset = dataset.DataSet(npy_data_path=npy_data_path, _mode='val')
             train_data_loader = DataLoader(dataset=train_dataset,
                                             batch_size=args.batch_size,
                                             num_workers=args.num_workers,
@@ -68,26 +60,26 @@ def main(args):
                                             shuffle=args.shuffle, pin_memory=True)
 
             if args.model == 'cnn':
-                model = CNN(in_channels=train_dataset[:][0].size(1), out_channels=train_dataset[:][0].size(1), out_features=train_dataset[:][1].size(-1),
+                model = cnn.CNN(in_channels=train_dataset[:][0].size(1), out_channels=train_dataset[:][0].size(1), out_features=train_dataset[:][1].size(-1),
                             activation=args.activation,
                             kernel_size=args.kernel_size, dropout=args.dropout,
                             window_size=args.window_size,
                             result_path=result_path).to(device)
             elif args.model == 'tcn':
-                model = TCN(in_channels=train_dataset[:][0].size(1), out_channels=train_dataset[:][0].size(1), out_features=train_dataset[:][1].size(-1),
+                model = tcn.TCN(channels=train_dataset[:][0].size(1), out_features=train_dataset[:][1].size(-1),
                             kernel_size=args.kernel_size, dropout=args.dropout, result_path=result_path,
                             window_size=args.window_size).to(device)
             
-            optimizer = get_optimizer(args, model)
-            is_plateau, scheduler = get_scheduler(args, optimizer)
+            _optimizer = optimizer.get_optimizer(args, model)
+            is_plateau, _scheduler = scheduler.get_scheduler(args, _optimizer)
 
-            criterion = None
+            _criterion = None
             if args.task == 'multi':
-                criterion = {'regression': get_criterion('mse'), 'classification': get_criterion('cross_entropy')}
+                _criterion = {'regression': criterion.get_criterion('mse'), 'classification': criterion.get_criterion('cross_entropy')}
             else:
-                criterion = get_criterion(args.criterion)
+                _criterion = criterion.get_criterion(args.criterion)
 
-            trainer = Train(device=device, model=model, optimizer=optimizer, criterion=criterion, scheduler=scheduler,
+            trainer = train.Train(device=device, model=model, optimizer=_optimizer, criterion=_criterion, scheduler=_scheduler,
                             task=args.task, fold_idx=fold_idx, 
                             epochs=args.epochs, batch_size=args.batch_size, period=args.period,
                             train_data_loader=train_data_loader, val_data_loader=val_data_loader,
@@ -97,26 +89,26 @@ def main(args):
     elif args.mode == 'test':
         
         data_path = os.path.join(c.DATA_PATH, args.data_type)
-        result_path, npy_data_path = get_result_dirs(args)
+        result_path, npy_data_path = miscellaneous.get_result_dirs(args)
 
-        test_dataset = DataSet(npy_data_path=npy_data_path, _mode='test')
+        test_dataset = dataset.DataSet(npy_data_path=npy_data_path, _mode='test')
         test_data_loader = DataLoader(dataset=test_dataset,
                             batch_size=args.batch_size,
                             num_workers=args.num_workers,
                             shuffle=False,
                             pin_memory=True)
-        tester = Test(device=device, k_fold=args.k_fold, task=args.task, data_type=args.data_type, data_loader=test_data_loader, result_path=result_path)
+        tester = evaluate.Test(device=device, k_fold=args.k_fold, task=args.task, data_type=args.data_type, data_loader=test_data_loader, result_path=result_path)
         tester.do()
     
     elif args.mode == 'plot':
 
-        plot_all_edges()
-        plot_grouped_rmse()
+        plot.plot_all_edges()
+        plot.plot_grouped_rmse()
 
     elif args.mode == 'rawdata':
         
         # plotting raw input data
-        plot_raw_data()
+        plot.plot_raw_data()
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='parser')

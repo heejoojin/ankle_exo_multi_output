@@ -60,13 +60,13 @@ def polar_coordiantes_to_gait_percentage(output: torch.Tensor, target: torch.Ten
 
     return gait_percentage
 
-def gait_phase_rmse(output: torch.Tensor, target: torch.Tensor, mask=None):
+def gait_phase_rmse(output: torch.Tensor, target: torch.Tensor): #, mask=None):
     
-    if mask != None:
-        indices = torch.nonzero(mask, as_tuple=True)
-        indices = indices[0]
-        output = output[indices, :]
-        target = target[indices, :]
+    # if mask != None:
+    #     indices = torch.nonzero(mask, as_tuple=True)
+    #     indices = indices[0]
+    #     output = output[indices, :]
+    #     target = target[indices, :]
     
     # calculating cosine distance
     num = torch.sum(output * target, dim=1) # element-wise multiplication
@@ -76,9 +76,9 @@ def gait_phase_rmse(output: torch.Tensor, target: torch.Tensor, mask=None):
     theta = torch.acos(cos) # computing the inverse cosine of each element in input
     gp_error = theta * 100 / (2 * math.pi)
     rmse = torch.sqrt(torch.mean(torch.square(gp_error)))
-    std = torch.std(gp_error)
+    # std = torch.std(gp_error)
 
-    rmse = torch.where(torch.isnan(rmse), torch.zeros_like(rmse), rmse)
-    std = torch.where(torch.isnan(std), torch.zeros_like(std), std)
+    # rmse = torch.where(torch.isnan(rmse), torch.zeros_like(rmse), rmse)
+    # std = torch.where(torch.isnan(std), torch.zeros_like(std), std)
     
-    return rmse, std
+    return rmse # , std

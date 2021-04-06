@@ -4,11 +4,11 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import config as c
-from metric import *
+import metric
 from matplotlib import rcParams
 
 rcParams['font.family'] = 'serif'
-rcParams['font.size'] = 17
+rcParams['font.size'] = 30
 
 def plot_grouped_rmse(width=20, height=20):
 
@@ -35,29 +35,33 @@ def plot_grouped_rmse(width=20, height=20):
             rmse = []
             std = []
 
-            for z, file_name in enumerate(_list):
+            for i, file_name in enumerate(_list):
                 
-                gait_percentage_df = pd.DataFrame()
+                # gait_percentage_df = pd.DataFrame()
                 file_name = '%s_%s'%(file_name, name)
 
-                for k in range(1, c.K_FOLD + 1):
+                # for k in range(1, c.K_FOLD + 1):
                 
-                    data = pd.read_csv(os.path.join(os.path.join(c.RESULT_PATH, file_name), 'raw_result_r_%d.csv'%k))
-                    gait_percentage_df = pd.concat([gait_percentage_df, data], axis=0, ignore_index=True)
+                    # data = pd.read_csv(os.path.join(os.path.join(c.RESULT_PATH, file_name), 'raw_result_r_%d.csv'%k))
+                    # gait_percentage_df = pd.concat([gait_percentage_df, data], axis=0, ignore_index=True)
+                data_rmse = pd.read_csv(os.path.join(os.path.join(c.RESULT_PATH, file_name), 'rmse.csv')).to_numpy()
                 
-                _rmse, _std = gait_phase_rmse(torch.Tensor(gait_percentage_df[['gt_x', 'gt_y']].to_numpy()), torch.Tensor(gait_percentage_df[['pred_x', 'pred_y']].to_numpy()))
-                rmse.append(_rmse.item())
-                std.append(_std.item())
+                std.append(np.std(data_rmse))
+                rmse.append(np.mean(data_rmse))
+                
+                # _rmse = metric.gait_phase_rmse(torch.Tensor(gait_percentage_df[['gt_x', 'gt_y']].to_numpy()), torch.Tensor(gait_percentage_df[['pred_x', 'pred_y']].to_numpy()))
+                # rmse.append(_rmse.item())
+                # std.append(_std.item())
 
             if 'left' in name:
-                rects = ax.bar(x_pos - bar_width/2, rmse, bar_width, yerr=std, ecolor='lightgrey', label='Left Ankle', color='powderblue')
+                rects = ax.bar(x_pos - bar_width/2, rmse, bar_width, yerr=std, ecolor='grey', label='Left Ankle', color='powderblue')
             elif 'right' in name:
-                rects = ax.bar(x_pos + bar_width/2, rmse, bar_width, yerr=std, ecolor='lightgrey', label='Right Ankle', color='darksalmon')
-            for rect in rects:
+                rects = ax.bar(x_pos + bar_width/2, rmse, bar_width, yerr=std, ecolor='grey', label='Right Ankle', color='darksalmon')
+            for j, rect in enumerate(rects):
                 height = rect.get_height()
-                ax.annotate('%1.5f'%height,
+                ax.annotate('%.2f'%height,
                             xy=(rect.get_x() + rect.get_width() / 2, height),
-                            xytext=(0, 3),
+                            xytext=(0, std[j]*100+30),
                             textcoords='offset points',
                             ha='center', va='bottom')
         
@@ -104,27 +108,12 @@ def plot_raw_data(width=20, height=20):
         angle = angle_df.groupby(['gait_phase'], as_index=False).agg({'ankle_angle':'mean'}).to_numpy()
         torque = torque_df.groupby(['gait_phase'], as_index=False).agg({'ankle_torque_from_current': 'mean'}).to_numpy()
 
+        label = c.LABEL_DICT[test_type]
         if 'speed' in test_type:
-            if test_type == 'speed0':
-                label = '0.8 m/s'
-            elif test_type == 'speed2':
-                label = '1.0 m/s'
-            elif test_type == 'speed3':
-                label = '1.2 m/s'
-
             speed_angle.plot(angle[:,0], angle[:,1], label=label, color=c.ANGLE_COLOR[i], zorder=i+1, linewidth=c.LINEWIDTH)
             speed_torque.plot(torque[:,0], torque[:,1], label=label, color=c.TORQUE_COLOR[i], zorder=i+1, linewidth=c.LINEWIDTH)
             
         elif 'act' in test_type:
-            if test_type == 'act0':
-                label = '0 Nm'
-            elif test_type == 'act1':
-                label = '10 Nm'
-            elif test_type == 'act2':
-                label = '20 Nm'
-            elif test_type == 'act3':
-                label = '30 Nm'
-
             act_angle.plot(angle[:,0], angle[:,1], label=label, color=c.ANGLE_COLOR[i - len(c.SPEED_LIST)], zorder=i+1, linewidth=c.LINEWIDTH)
             act_torque.plot(torque[:,0], torque[:,1], label=label, color=c.TORQUE_COLOR[i - + len(c.SPEED_LIST)], zorder=i+1, linewidth=c.LINEWIDTH)
 
@@ -188,7 +177,7 @@ def plot_all_edges(width=20, height=20, start_time=-0.05, end_time=0.05):
             heel_count = 0.0
             toe_count = 0.0
 
-            label = '%s = %s'%(file_name.split('_')[0][:-1], file_name.split('_')[0][-1])
+            label = c.LABEL_DICT[file_name.split('_')[0]] # [:-1], c.LABEL_DICT[file_name.split('_')[0][-1])
 
             for j in range(1, c.K_FOLD + 1):
                 _result_path = os.path.join(os.path.join(c.RESULT_PATH, file_name), 'result_c_%d.csv'%j)
@@ -226,14 +215,14 @@ def plot_all_edges(width=20, height=20, start_time=-0.05, end_time=0.05):
             if 'speed' in file_name:
                 speed_rising.plot(rising_edge, label=label, color=c.COLORS[i], linewidth=c.LINEWIDTH)
                 speed_falling.plot(falling_edge, label=label, color=c.COLORS[i], linewidth=c.LINEWIDTH)
-                speed_rising.annotate('%0.2f'%np.amax(rising_edge), (np.argmax(rising_edge), np.amax(rising_edge)), ha='center')
-                speed_falling.annotate('%0.2f'%np.amax(falling_edge), (np.argmax(falling_edge), np.amax(falling_edge)), ha='center')
+                speed_rising.annotate('%.2f'%np.amax(rising_edge), (np.argmax(rising_edge), np.amax(rising_edge)), ha='center')
+                speed_falling.annotate('%.2f'%np.amax(falling_edge), (np.argmax(falling_edge), np.amax(falling_edge)), ha='center')
 
             elif 'act' in file_name:
                 act_rising.plot(rising_edge, label=label, color=c.COLORS[i], linewidth=c.LINEWIDTH)
                 act_falling.plot(falling_edge, label=label, color=c.COLORS[i], linewidth=c.LINEWIDTH)
-                act_rising.annotate('%0.2f'%np.amax(rising_edge), (np.argmax(rising_edge), np.amax(rising_edge)), ha='center')
-                act_falling.annotate('%0.2f'%np.amax(falling_edge), (np.argmax(falling_edge), np.amax(falling_edge)), ha='center')
+                act_rising.annotate('%.2f'%np.amax(rising_edge), (np.argmax(rising_edge), np.amax(rising_edge)), ha='center')
+                act_falling.annotate('%.2f'%np.amax(falling_edge), (np.argmax(falling_edge), np.amax(falling_edge)), ha='center')
 
         speed_rising.set_title('Speed - Swing to Stance', fontweight='semibold')
         speed_falling.set_title('Speed - Stance to Swing', fontweight='semibold')

@@ -2,40 +2,34 @@ import time
 import os
 import torch
 import csv
+import metric
 from torch.utils.tensorboard import SummaryWriter
-from optimizer import *
-from criterion import *
-from metric import *
+
 
 class Train:
-    def __init__(self, device, model, optimizer, criterion, scheduler,
-                task, fold_idx, 
-                epochs, batch_size, period,
-                train_data_loader, val_data_loader,
-                result_path, is_plateau):
+    def __init__(self, **kwargs):
 
-        self.result_path = result_path
+        self.result_path = kwargs['result_path']
         self.tensorboard_path = os.path.join(self.result_path, 'tensorboard')
         
-        self.log_path = os.path.join(self.result_path, 'log_%d.csv'%fold_idx)
+        self.log_path = os.path.join(self.result_path, 'log_%d.csv'%kwargs['fold_idx'])
         if os.path.isfile(self.log_path):
             os.remove(self.log_path)
         self.tb_writer = SummaryWriter(log_dir=self.tensorboard_path)
 
-        self.device = device
-        self.model = model
-        self.optimizer = optimizer
-        self.criterion = criterion
-        self.task = task
-        self.fold_idx = fold_idx
-        self.epochs = epochs
-        self.batch_size = batch_size
-        self.period = period
-        self.train_data_loader = train_data_loader
-        self.val_data_loader = val_data_loader
-
-        self.scheduler = scheduler
-        self.is_plateau = is_plateau
+        self.device = kwargs['device']
+        self.model = kwargs['model']
+        self.optimizer = kwargs['optimizer']
+        self.criterion = kwargs['criterion']
+        self.task = kwargs['task']
+        self.fold_idx = kwargs['fold_idx']
+        self.epochs = kwargs['epochs']
+        self.batch_size = kwargs['batch_size']
+        self.period = kwargs['period']
+        self.train_data_loader = kwargs['train_data_loader']
+        self.val_data_loader = kwargs['val_data_loader']
+        self.scheduler = kwargs['scheduler']
+        self.is_plateau = kwargs['is_plateau']
 
         self.loss = {}
 
@@ -47,14 +41,14 @@ class Train:
         self.npv = {}
         self.f1score = {}
 
-    def log_regression(self, output, target, _mode, mask=None):
-        _rmse, _ = gait_phase_rmse(output, target, mask)
+    def log_regression(self, output, target, _mode):
+        _rmse = metric.gait_phase_rmse(output=output, target=target)
         self.rmse[_mode] += _rmse
 
     def log_classification(self, output, target, _mode):
         _output = torch.sigmoid(output)
         _output = (_output > 0.5).float() 
-        metrics = classification_metrics(_output, target)
+        metrics = metric.classification_metrics(_output, target)
         self.accuracy[_mode] += metrics['accuracy']
         self.precision[_mode] += metrics['precision']
         self.recall[_mode] += metrics['recall']
@@ -69,7 +63,7 @@ class Train:
             self.log_classification(output, target, _mode)
         elif self.task == 'multi':
             out_r, out_c = output
-            self.log_regression(out_r, target[:, :-1], _mode, target[:, -1])
+            self.log_regression(out_r, target[:, :-1], _mode)
             self.log_classification(out_c, target[:, -1], _mode)
         
     def write_regression(self, epoch):
@@ -146,10 +140,9 @@ class Train:
                     
                     out_r, out_c = output
 
-                    mask = torch.stack([y[:, -1], y[:, -1]], dim=1)
-
                     #########################################################
                     # preventing the model from training swing phase
+                    # mask = torch.stack([y[:, -1], y[:, -1]], dim=1)
                     # out_r.register_hook(lambda grad: grad * mask)
                     #########################################################
 
@@ -167,7 +160,6 @@ class Train:
                     self.loss['train'] += regression_loss.item() + classification_loss.item()
 
                 else:
-
                     _loss = self.criterion(output, y)
                     self.optimizer.zero_grad()
                     _loss.backward()
