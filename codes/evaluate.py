@@ -40,7 +40,7 @@ class Test:
                 os.remove(_path)
 
         self.colors = ['lightcoral', 'firebrick', 'chocolate', 'brown', 'orange', 'olive', 'green', 'teal', 'midnightblue', 'purple']
-        self.roc_fig = plt.figure(figsize=(10, 10))
+        self.roc_fig = plt.figure(figsize=(20, 20))
         self.roc_ax = self.roc_fig.add_subplot(111)
         self.roc_ax.set_title('Receiver Operating Characteristic', fontweight='semibold')
 
@@ -56,7 +56,7 @@ class Test:
         self.swing_to_stance = np.zeros((2 * self.time_options + 1, ))
         self.stance_to_swing = np.zeros((2 * self.time_options + 1, ))
 
-        self._range = 3000
+        self._range = 1500
 
     def test_classification(self, output, target):
         
@@ -196,11 +196,11 @@ class Test:
                     result_r_df['ground_truth'] = result_r_df['ground_truth'].where(result_r_df['ground_truth'] <= 0.60, np.nan)
                     result_r_df['prediction'] = result_r_df['prediction'].where(result_r_df['ground_truth'] <= 0.60, np.nan)
                     
-                    plt.axhline(60.0, color='lightgray', linestyle='dashed', linewidth=c.LINEWIDTH, zorder=0)
+                    plt.axhline(60.0, color='lightgray', linestyle='dashed', zorder=0)
 
-                    plt.plot(dotted.iloc[:self._range] * 100, color='lightgrey', linestyle='dashed', linewidth=c.LINEWIDTH)
-                    plt.plot(result_r_df.iloc[:self._range, 0] * 100, label='Groud Truth', linewidth=c.LINEWIDTH, color='powderblue')
-                    plt.plot(result_r_df.iloc[:self._range, 1] * 100, label='Prediction', linewidth=c.LINEWIDTH, color='darksalmon')
+                    plt.plot(dotted.iloc[:self._range] * 100, color='lightgrey', linestyle='dashed')
+                    plt.plot(result_r_df.iloc[:self._range, 0] * 100, label='Groud Truth', color='powderblue')
+                    plt.plot(result_r_df.iloc[:self._range, 1] * 100, label='Prediction', color='darksalmon')
                     if self.data_type == 'left':
                         plt.title('Left Ankle', fontweight='semibold')
                     elif self.data_type == 'right':
@@ -247,7 +247,7 @@ class Test:
     def set_roc_curve(self, fold_idx, roc_result):
         fpr, tpr, thresholds = roc_curve(roc_result[:,0], roc_result[:,1], pos_label=1)
         auroc = auc(fpr, tpr)
-        self.roc_ax.plot(fpr, tpr, 'b', color=self.colors[fold_idx-1], label='ROC fold %d (AUC = %0.2f)'%(fold_idx, auroc), linewidth=c.LINEWIDTH)
+        self.roc_ax.plot(fpr, tpr, 'b', color=self.colors[fold_idx-1], label='ROC fold %d (AUC = %0.2f)'%(fold_idx, auroc))
 
     def plot_roc_curve(self):
         x_min, x_max = 0, 0.3
@@ -267,8 +267,8 @@ class Test:
         
         ground_truth = result[:self._range, 0] * 100
         prediction = result[:self._range, 1] * 100
-        plt.plot(ground_truth, label='Groud Truth', linewidth=c.LINEWIDTH, color='powderblue')
-        plt.plot(prediction, label='Prediction', linewidth=c.LINEWIDTH, color='darksalmon')
+        plt.plot(ground_truth, label='Groud Truth', color='powderblue')
+        plt.plot(prediction, label='Prediction', color='darksalmon')
         if self.data_type == 'left':
             plt.title('Left Ankle', fontweight='semibold')
         elif self.data_type == 'right':
@@ -285,8 +285,8 @@ class Test:
 
     def plot_classification(self, result: np.ndarray, plot_path_png, plot_path_svg):
         fig = plt.figure(figsize=(20, 8))
-        plt.plot(result[:self._range, 0], label='Groud Truth', linewidth=c.LINEWIDTH, color='powderblue')
-        plt.plot(result[:self._range, 1], label='Prediction', linewidth=c.LINEWIDTH, color='darksalmon')
+        plt.plot(result[:self._range, 0], label='Groud Truth', color='powderblue')
+        plt.plot(result[:self._range, 1], label='Prediction', color='darksalmon')
         if self.data_type == 'left':
             plt.title('Left Ankle', fontweight='semibold')
         elif self.data_type == 'right':

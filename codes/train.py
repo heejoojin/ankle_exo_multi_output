@@ -5,7 +5,6 @@ import csv
 import metric
 from torch.utils.tensorboard import SummaryWriter
 
-
 class Train:
     def __init__(self, **kwargs):
 

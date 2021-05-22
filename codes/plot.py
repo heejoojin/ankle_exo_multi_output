@@ -6,9 +6,10 @@ import matplotlib.pyplot as plt
 import config as c
 import metric
 from matplotlib import rcParams
+import matplotlib.pylab as pylab
 
 rcParams['font.family'] = 'serif'
-rcParams['font.size'] = 30
+pylab.rcParams.update(c.PARAMS)
 
 def plot_grouped_rmse(width=20, height=20):
 
@@ -110,37 +111,47 @@ def plot_raw_data(width=20, height=20):
 
         label = c.LABEL_DICT[test_type]
         if 'speed' in test_type:
-            speed_angle.plot(angle[:,0], angle[:,1], label=label, color=c.ANGLE_COLOR[i], zorder=i+1, linewidth=c.LINEWIDTH)
-            speed_torque.plot(torque[:,0], torque[:,1], label=label, color=c.TORQUE_COLOR[i], zorder=i+1, linewidth=c.LINEWIDTH)
+            speed_angle.plot(angle[:,0], angle[:,1], label=label, color=c.ANGLE_COLOR[i], zorder=i+1)
+            speed_torque.plot(torque[:,0], torque[:,1], label=label, color=c.TORQUE_COLOR[i], zorder=i+1)
             
         elif 'act' in test_type:
-            act_angle.plot(angle[:,0], angle[:,1], label=label, color=c.ANGLE_COLOR[i - len(c.SPEED_LIST)], zorder=i+1, linewidth=c.LINEWIDTH)
-            act_torque.plot(torque[:,0], torque[:,1], label=label, color=c.TORQUE_COLOR[i - + len(c.SPEED_LIST)], zorder=i+1, linewidth=c.LINEWIDTH)
+            act_angle.plot(angle[:,0], angle[:,1], label=label, color=c.ANGLE_COLOR[i - len(c.SPEED_LIST)], zorder=i+1)
+            act_torque.plot(torque[:,0], torque[:,1], label=label, color=c.TORQUE_COLOR[i - + len(c.SPEED_LIST)], zorder=i+1)
 
     for subplot in [speed_angle, act_angle]:
+        for axis in ['left', 'bottom']: # ['top','bottom','left','right']:
+            subplot.spines[axis].set_linewidth(5)
+        for axis in ['top', 'right']:
+            subplot.spines[axis].set_linewidth(0)
         subplot.set_title('Ankle Angle', fontweight='semibold')
         subplot.set_xlabel('Gait Phase [%]', fontweight='semibold')
         subplot.set_ylabel('Ankle Angle [°]', fontweight='semibold')
         subplot.set_xlim([0, 100])
         subplot.set_ylim([-10, 20])
         plt.yticks(np.arange(-10, 21, 5))
-        subplot.axhline(0, color='lightgrey', linestyle='dashed', zorder=0, linewidth=c.LINEWIDTH)
+        subplot.axhline(0, color='lightgrey', linestyle='dashed', zorder=0)
         subplot.legend(loc='upper right')
         
+        
     for subplot in [speed_torque, act_torque]:
+        for axis in ['left', 'bottom']:
+            subplot.spines[axis].set_linewidth(5)
+        for axis in ['top', 'right']:
+            subplot.spines[axis].set_linewidth(0)
         subplot.set_title('Ankle Moment', fontweight='semibold')
         subplot.set_xlabel('Gait Phase [%]', fontweight='semibold')
         subplot.set_ylabel('Ankle Moment [Nm/kg]', fontweight='semibold')
         subplot.set_xlim([0, 100])
         subplot.set_ylim([-10, 30])
         plt.yticks(np.arange(-10, 31, 5))
-        subplot.axhline(0, color='lightgrey', linestyle='dashed', zorder=0, linewidth=c.LINEWIDTH)
+        subplot.axhline(0, color='lightgrey', linestyle='dashed', zorder=0)
         subplot.legend(loc='upper right')
 
     plt.tight_layout()
     plt.savefig(os.path.join(c.PLOT_PATH, 'raw_data.png'))
     plt.savefig(os.path.join(c.PLOT_PATH, 'raw_data.svg'))
     plt.close(fig)
+    
 
 def plot_all_edges(width=20, height=20, start_time=-0.05, end_time=0.05):
 
@@ -213,14 +224,14 @@ def plot_all_edges(width=20, height=20, start_time=-0.05, end_time=0.05):
             falling_edge = falling_edge / c.K_FOLD / toe_count * 100
             
             if 'speed' in file_name:
-                speed_rising.plot(rising_edge, label=label, color=c.COLORS[i], linewidth=c.LINEWIDTH)
-                speed_falling.plot(falling_edge, label=label, color=c.COLORS[i], linewidth=c.LINEWIDTH)
+                speed_rising.plot(rising_edge, label=label, color=c.COLORS[i])
+                speed_falling.plot(falling_edge, label=label, color=c.COLORS[i])
                 speed_rising.annotate('%.2f'%np.amax(rising_edge), (np.argmax(rising_edge), np.amax(rising_edge)), ha='center')
                 speed_falling.annotate('%.2f'%np.amax(falling_edge), (np.argmax(falling_edge), np.amax(falling_edge)), ha='center')
 
             elif 'act' in file_name:
-                act_rising.plot(rising_edge, label=label, color=c.COLORS[i], linewidth=c.LINEWIDTH)
-                act_falling.plot(falling_edge, label=label, color=c.COLORS[i], linewidth=c.LINEWIDTH)
+                act_rising.plot(rising_edge, label=label, color=c.COLORS[i])
+                act_falling.plot(falling_edge, label=label, color=c.COLORS[i])
                 act_rising.annotate('%.2f'%np.amax(rising_edge), (np.argmax(rising_edge), np.amax(rising_edge)), ha='center')
                 act_falling.annotate('%.2f'%np.amax(falling_edge), (np.argmax(falling_edge), np.amax(falling_edge)), ha='center')
 
@@ -239,7 +250,7 @@ def plot_all_edges(width=20, height=20, start_time=-0.05, end_time=0.05):
                 if float(label.get_text()) % 0.025 != 0:
                     label.set_visible(False)
                 if float(label.get_text()) == 0.0:
-                    subplot.axvline(i, color='lightgrey', linestyle='dashed', linewidth=c.LINEWIDTH, zorder=0)
+                    subplot.axvline(i, color='lightgrey', linestyle='dashed', zorder=0)
 
             subplot.legend(loc='upper right')
 
