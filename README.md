@@ -13,7 +13,7 @@ python main.py --mode=train --save_name=*name --data_type=*data_type --test_type
 python main.py --mode=test --save_name=*name --data_type=*data_type --test_type=*test_type --task=multi
 ```
 
-- Plot results
+<!-- - Plot results
 ```bash
 python main.py --mode=plot
 ```
@@ -21,4 +21,4 @@ python main.py --mode=plot
 - Plot raw data
 ```bash
 python main.py --mode=rawdata
-```
+``` -->
